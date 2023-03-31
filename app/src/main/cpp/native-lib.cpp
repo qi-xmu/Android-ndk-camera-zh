@@ -2,23 +2,69 @@
 #include <string>
 
 #include "ncamera.h"
+#include "camera_surface.h"
+#include "native-log.h"
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_qi_tcamera_MainActivity_stringFromJNI(
-        JNIEnv *env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-
-    // test code
-    auto camera = MyCamera::NDKCamera();
-
-    ImageFormat compatibleCameraRes;
-    camera.MatchCaptureSizeRequest(1920, 1080, &compatibleCameraRes, nullptr);
-
-    // test code end
-    return env->NewStringUTF(hello.c_str());
+/**
+ * 创建相机对象
+ */
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_qi_tcamera_MainActivity_createCamera(JNIEnv *env, jobject thiz, jint width, jint height) {
+    CameraEngine *cam_eng = new CameraEngine(env, thiz, width, height);
+    return reinterpret_cast<jlong>(cam_eng);
 }
 
-int Camera() {
-    return 0;
+/**
+ * 创建相机预览界面
+ */
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_qi_tcamera_MainActivity_onPreviewSurfaceCreated(JNIEnv *env, jobject thiz,
+                                                         jlong ndk_camera, jobject surface) {
+    CameraEngine *cam_eng = reinterpret_cast<CameraEngine *> (ndk_camera);
+    cam_eng->CreateCameraSession(surface);
+    cam_eng->StartPreview(true);
+}
+
+
+/**
+ * 销毁相机预览界面
+ */
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_qi_tcamera_MainActivity_onPreviewSurfaceDestroyed(JNIEnv *env, jobject thiz,
+                                                           jlong ndk_camera, jobject surface) {
+    CameraEngine *cam_eng = reinterpret_cast<CameraEngine *>(ndk_camera);
+
+    jclass cls = env->FindClass("android/view/Surface");
+    jmethodID toString =
+            env->GetMethodID(cls, "toString", "()Ljava/lang/String;");
+    jstring destroyObjStr =
+            reinterpret_cast<jstring>(env->CallObjectMethod(surface, toString));
+    const char *destroyObjName = env->GetStringUTFChars(destroyObjStr, nullptr);
+    LOG_INFO("Destroy Object Name: %s", destroyObjName);
+
+    jstring appObjStr = reinterpret_cast<jstring>(
+            env->CallObjectMethod(cam_eng->GetSurfaceObject(), toString));
+    const char *appObjName = env->GetStringUTFChars(appObjStr, nullptr);
+    env->ReleaseStringUTFChars(destroyObjStr, destroyObjName);
+    env->ReleaseStringUTFChars(appObjStr, appObjName);
+
+    cam_eng->StartPreview(false);
+}
+
+/**
+ * 销毁相机对象
+ */
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_qi_tcamera_MainActivity_destroyCamera(JNIEnv *env, jobject thiz, jlong ndk_camera) {
+    if (!ndk_camera) {
+        return;
+    }
+
+    // 释放相机对象
+    CameraEngine *cam_eng = reinterpret_cast<CameraEngine *>(ndk_camera);
+    delete cam_eng;
 }

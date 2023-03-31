@@ -16,13 +16,23 @@
 #include <string>
 
 
+/**
+ * 相机当前的状态
+ */
+enum class CaptureSessionState : int32_t {
+    READY = 0,  // session is ready
+    ACTIVE,     // session is busy
+    CLOSED,     // session is closed(by itself or a new session evicts)
+    MAX_STATE
+};
+
 struct CaptureRequestInfo {
-    ANativeWindow *outputNativeWindow_; // 定义输出类型
-    ACaptureSessionOutput *sessionOutput_; // Session 输出
-    ACameraOutputTarget *target_; // Container for a single output target.
-    ACaptureRequest *request_; // 请求图像所包含的设置
-    ACameraDevice_request_template template_; //  Capture request pre-defined template types
-    int sessionSequenceId_; //id
+    ANativeWindow *_outputNativeWindow; // 定义输出类型
+    ACaptureSessionOutput *_sessionOutput; // Session 输出
+    ACameraOutputTarget *_target; // Container for a single output target.
+    ACaptureRequest *_request; // 请求图像所包含的设置
+    ACameraDevice_request_template _template; //  Capture request pre-defined template types
+    int _sessionSequenceId; //id
 };
 
 
@@ -132,6 +142,21 @@ namespace MyCamera {
          */
         uint64_t _exposureTime;
 
+        /**
+         * 相机会话输出容器
+         */
+        ACaptureSessionOutputContainer *_outputContainer;
+
+        /**
+         * 相机会话当前的状态
+         */
+        CaptureSessionState _captureSessionState;
+
+        /**
+         * 相机捕获会话
+         */
+        ACameraCaptureSession *_captureSession;
+
     public:
         NDKCamera();
 
@@ -149,6 +174,7 @@ namespace MyCamera {
          * @return
          */
 //        ACameraDevice_stateCallbacks* GetDeviceListener()
+
         /**
          * 当相机状态发生变化时的回调函数
          * @param id 相机标识符
@@ -156,11 +182,44 @@ namespace MyCamera {
          */
         void OnCameraStatusChanged(const char *id, bool available);
 
-//        bool MatchCaptureSizeRequest(int32_t reqWidth, int32_t reqHeight, ImageFormat *view);
 
+        /**
+         *
+         * @param requestWidth
+         * @param requestHeight
+         * @param resView
+         * @param resCap
+         * @return
+         */
         bool
         MatchCaptureSizeRequest(int32_t requestWidth, int32_t requestHeight, ImageFormat *resView,
                                 ImageFormat *resCap);
+
+        /**
+         * 创建一个相机显示的会话
+         * @param preview_window 预览窗口
+         * @param jpg_window
+         * @param manual_preview 是否为手动预览
+         * @param image_rotation 图像的旋转度数
+         */
+        void
+        CreateSession(ANativeWindow *preview_window, ANativeWindow *jpg_window, bool manual_preview,
+                      int32_t image_rotation);
+
+        /**
+         * 创建一个预览的会话
+         * @param previewWindow 预览的窗口
+         */
+        void CreatePreviewSession(ANativeWindow *previewWindow);
+
+        /**
+         * 更新相机捕获会话状态
+         * @param ses 相机捕获会话
+         * @param state 更新的状态
+         */
+        void OnSessionState(ACameraCaptureSession *ses, CaptureSessionState state);
+
+        void StartPreview(bool state);
     };
 
 } // NCamera

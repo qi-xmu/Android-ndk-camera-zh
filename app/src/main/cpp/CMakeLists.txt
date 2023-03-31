@@ -20,10 +20,12 @@ add_library( # Sets the name of the library.
         SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/ncamera.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/camera_listeners.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/camera_surface.cpp
         native-lib.cpp)
 
 
 target_link_libraries( # Specifies the target library.
         tcamera
         log
+        android
         camera2ndk)

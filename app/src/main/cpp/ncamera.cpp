@@ -1,17 +1,10 @@
 //
 // Created by 36014 on 2023/3/30.
 //
-
+#include "native-log.h"
 #include "ncamera.h"
 #include "camera_listeners.h"
-#include <android/log.h>
 
-//#include <string>
-
-#define LOG_TAG    "Ncam"
-#define LOG_INFO(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOG_WARN(...)  __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
-//#define LOG_ERR(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 namespace MyCamera {
     /**
@@ -337,6 +330,94 @@ namespace MyCamera {
     void NDKCamera::OnCameraStatusChanged(const char *id, bool available) {
         if (_valid) {
             _cameras[std::string(id)].available = available;
+        }
+    }
+
+    void NDKCamera::CreateSession(ANativeWindow *preview_window, ANativeWindow *jpg_window,
+                                  bool manual_preview, int32_t image_rotation) {
+        // 预览的请求缓冲区
+        _requests[PREVIEW_REQUEST_IDX]._outputNativeWindow = preview_window;
+        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_PREVIEW;
+        // 拍摄的请求缓冲区
+        _requests[JPG_CAPTURE_REQUEST_IDX]._outputNativeWindow = jpg_window;
+        _requests[JPG_CAPTURE_REQUEST_IDX]._template = TEMPLATE_STILL_CAPTURE;
+
+        ACaptureSessionOutputContainer_create(&_outputContainer);
+        for (auto &req: _requests) {
+            // 没有输出窗口则跳过
+            if (!req._outputNativeWindow) {
+                continue;
+            }
+
+            // 获取窗口
+            ANativeWindow_acquire(req._outputNativeWindow);
+            // 根据窗口创建一个 会话输出对象
+            ACaptureSessionOutput_create(req._outputNativeWindow, &req._sessionOutput);
+            // 将会话的输出添加到容器中
+            ACaptureSessionOutputContainer_add(_outputContainer, req._sessionOutput);
+
+            // 根据窗口创建一个 相机目标输出对象
+            ACameraOutputTarget_create(req._outputNativeWindow, &req._target);
+            // 创建一个相机捕获请求 根据 模板ID 决定捕获的类型
+            ACameraDevice_createCaptureRequest(_cameras[_activeCameraId].device, req._template,
+                                               &req._request);
+            // 将 目标输出对象 放入请求中
+            ACaptureRequest_addTarget(req._request, req._target);
+        }
+        // 更新相机当前的状态
+        _captureSessionState = CaptureSessionState::READY;
+
+        // 相机捕获会话过程中的一些回调函数
+        static ACameraCaptureSession_stateCallbacks sessionListener = {
+                .context = this,
+                .onClosed = OnSessionClosed,
+                .onReady = OnSessionReady,
+                .onActive = OnSessionActive,
+        };
+        ACameraDevice_createCaptureSession(
+                _cameras[_activeCameraId].device,
+                _outputContainer,
+                &sessionListener,
+                &_captureSession);
+
+        if (jpg_window) {
+            // 这里设置捕获时的一些属性，这里设置的图像的旋转角度
+            ACaptureRequest_setEntry_i32(
+                    _requests[JPG_CAPTURE_REQUEST_IDX]._request,
+                    ACAMERA_JPEG_ORIENTATION,
+                    1,
+                    &image_rotation
+            );
+        }
+        if (!manual_preview) {
+            return;
+        }
+
+        const int32_t ae_off = ACAMERA_CONTROL_AE_MODE_OFF;
+        ACaptureRequest_setEntry_i32(_requests[PREVIEW_REQUEST_IDX]._request,
+                                     ACAMERA_CONTROL_AE_MODE, 1,
+                                     &ae_off);
+    }
+
+    void NDKCamera::CreatePreviewSession(ANativeWindow *previewWindow) {
+        CreateSession(previewWindow, nullptr, false, 0);
+    }
+
+    void NDKCamera::OnSessionState(ACameraCaptureSession *ses, CaptureSessionState state) {
+        if (ses == nullptr || ses != _captureSession) {
+            LOG_ERR("ses is not mine. !!");
+            return;
+        }
+        _captureSessionState = state;
+    }
+
+    void NDKCamera::StartPreview(bool state) {
+        if (state) {
+            ACameraCaptureSession_setRepeatingRequest(_captureSession, nullptr, 1,
+                                                      &_requests[PREVIEW_REQUEST_IDX]._request,
+                                                      nullptr);
+        } else if (_captureSessionState == CaptureSessionState::ACTIVE) {
+            ACameraCaptureSession_stopRepeating(_captureSession);
         }
     }
 
