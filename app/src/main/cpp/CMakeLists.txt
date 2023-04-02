@@ -15,12 +15,12 @@ set(CMAKE_SHARED_LINKER_FLAGS
 
 add_library( # Sets the name of the library.
         tcamera
-
         # Sets the library as a shared library.
         SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/ncamera.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/camera_listeners.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/camera_surface.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/camera_engine.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/camera_image_reader.cpp
         native-lib.cpp)
 
 
@@ -28,4 +28,5 @@ target_link_libraries( # Specifies the target library.
         tcamera
         log
         android
+        mediandk
         camera2ndk)

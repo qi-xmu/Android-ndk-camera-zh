@@ -27,20 +27,50 @@ enum class CaptureSessionState : int32_t {
 };
 
 struct CaptureRequestInfo {
+    /**
+     * ANativeWindow对象，用于构建 ACaptureSessionOutput对象
+     */
     ANativeWindow *_outputNativeWindow; // 定义输出类型
+    /**
+     * SessionOutput 的输出对象是 ANative_Window
+     * ANativeWindow 通过 ACaptureSessionOutput_create 获得一个 ACaptureSessionOutput对象。
+     * ACaptureSessionOutput对象 可以放入 ACaptureSessionOutputContainer 容器中，
+     * 和 相机（camera） 一同用于生成一个 ACameraCaptureSession对象。
+     */
     ACaptureSessionOutput *_sessionOutput; // Session 输出
-    ACameraOutputTarget *_target; // Container for a single output target.
-    ACaptureRequest *_request; // 请求图像所包含的设置
+    /**
+     * 一个请求包含该请求的 输出目标（target）
+     * _target 由 ANativeWindow通过 ACameraOutputTarget_create 构造，
+     * 需要通过 ACaptureRequest_addTarget 添加到请求中
+     */
+    ACameraOutputTarget *_target;
+    /**
+     * 根据 相机（camera） 和 模板（template） 通过 ACameraDevice_createCaptureRequest 构造的来。
+     * 该对象 和 ACameraCaptureSession对象 通过 ACameraCaptureSession_setRepeatingRequest 可以不断的向相机发送捕获请求，从而得到连续的画面。
+     * ACameraCaptureSession对象 通过 ACameraCaptureSession_stopRepeating 停止发送请求。
+     */
+    ACaptureRequest *_request;
+    /**
+     * 预设的图像模板 不同的模板对 图像质量和帧率的侧重不同。
+     * TEMPLATE_PREVIEW 侧重帧率而非图像质量
+     * TEMPLATE_STILL_CAPTURE 侧重图像质量而非帧率
+     */
     ACameraDevice_request_template _template; //  Capture request pre-defined template types
-    int _sessionSequenceId; //id
+    /**
+     * 一般不用于预览中。
+     * 发送一个图像捕获请求 对应一个 图像输出序号。
+     */
+    int _sessionSequenceId;
 };
 
 
+/**
+ * AIMAGE_FORMAT_YUV_420_888
+ */
 struct ImageFormat {
     int32_t width;
     int32_t height;
-
-    int32_t format;  // Through out this demo, the format is fixed to
+    int32_t format;  // Through out this demo, the format is fixed to AIMAGE_FORMAT_YUV_420_888
     // YUV_420 format
 };
 
@@ -219,6 +249,10 @@ namespace MyCamera {
          */
         void OnSessionState(ACameraCaptureSession *ses, CaptureSessionState state);
 
+        /**
+         * 启动图像预览
+         * @param state 是否启用预览
+         */
         void StartPreview(bool state);
     };
 

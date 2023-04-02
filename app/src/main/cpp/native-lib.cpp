@@ -1,8 +1,11 @@
 #include <jni.h>
 #include <string>
 
+#include <android/surface_texture.h>
+#include <android/surface_texture_jni.h>
+
 #include "ncamera.h"
-#include "camera_surface.h"
+#include "camera_engine.h"
 #include "native-log.h"
 
 /**
@@ -23,7 +26,8 @@ JNIEXPORT void JNICALL
 Java_com_qi_tcamera_MainActivity_onPreviewSurfaceCreated(JNIEnv *env, jobject thiz,
                                                          jlong ndk_camera, jobject surface) {
     CameraEngine *cam_eng = reinterpret_cast<CameraEngine *> (ndk_camera);
-    cam_eng->CreateCameraSession(surface);
+//    cam_eng->CreateCameraSession(surface);
+    cam_eng->setCameraImageReader(surface);
     cam_eng->StartPreview(true);
 }
 
@@ -63,8 +67,24 @@ Java_com_qi_tcamera_MainActivity_destroyCamera(JNIEnv *env, jobject thiz, jlong 
     if (!ndk_camera) {
         return;
     }
-
     // 释放相机对象
     CameraEngine *cam_eng = reinterpret_cast<CameraEngine *>(ndk_camera);
     delete cam_eng;
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_qi_tcamera_MainActivity_getCompatiblePreviewSize(JNIEnv *env, jobject thiz,
+                                                          jlong ndk_camera) {
+    if (!ndk_camera) return nullptr;
+    CameraEngine *cam_eng = reinterpret_cast<CameraEngine *>(ndk_camera);
+    ImageFormat compat_resolution = cam_eng->GetCompatibleResolution();
+    jclass cls = env->FindClass("android/util/Size");
+
+    return env->NewObject(
+            cls,
+            env->GetMethodID(cls, "<init>", "(II)V"),
+            compat_resolution.width,
+            compat_resolution.height
+    );
 }

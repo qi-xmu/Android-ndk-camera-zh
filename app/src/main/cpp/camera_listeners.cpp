@@ -9,6 +9,9 @@
 
 using namespace MyCamera;
 
+/**
+ * 相机设备是否可用（一般针对外部相机）
+ */
 void OnCameraAvailable(void *ctx, const char *id) {
     reinterpret_cast<NDKCamera *>(ctx)->OnCameraStatusChanged(id, true);
 }
@@ -16,7 +19,6 @@ void OnCameraAvailable(void *ctx, const char *id) {
 void OnCameraUnavailable(void *ctx, const char *id) {
     reinterpret_cast<NDKCamera *>(ctx)->OnCameraStatusChanged(id, false);
 }
-
 
 // CaptureSession state callbacks
 void OnSessionClosed(void *ctx, ACameraCaptureSession *ses) {

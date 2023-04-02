@@ -7,7 +7,6 @@
 
 
 #include <camera/NdkCameraCaptureSession.h>
-#include "ncamera.h"
 
 /**
  * 相机可用回调

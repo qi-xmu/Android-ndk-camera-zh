@@ -71,7 +71,7 @@ namespace MyCamera {
          * @return
          */
         bool operator>(DisplayDimension &other) {
-            return (_w >= other._w & _h >= other._h);
+            return (_w >= other._w && _h >= other._h);
         }
 
         /**
@@ -111,16 +111,12 @@ namespace MyCamera {
                    "Height = " + std::to_string(_h);
         }
 
-        // 获取宽
         int32_t width(void) { return _w; }
 
-        // 获取高
         int32_t height(void) { return _h; }
 
-        // 获取原始宽
         int32_t org_width(void) { return (_portrait ? _h : _w); }
 
-        // 获取原始高
         int32_t org_height(void) { return (_portrait ? _w : _h); }
 
     private:
@@ -136,6 +132,12 @@ namespace MyCamera {
         PREVIEW_REQUEST_IDX = 0,
         JPG_CAPTURE_REQUEST_IDX, // 1
         CAPTURE_REQUEST_COUNT, // 2
+    };
+    // 设置相机可用时的回调监听器
+    static ACameraManager_AvailabilityCallbacks cameraMgrListener = {
+            .context = nullptr,
+            .onCameraAvailable = OnCameraAvailable,
+            .onCameraUnavailable = OnCameraUnavailable,
     };
 
     NDKCamera::NDKCamera() {
@@ -161,14 +163,10 @@ namespace MyCamera {
                                   &_cameras[_activeCameraId].device);
 
         // 设置相机可用时的回调监听器
-        static ACameraManager_AvailabilityCallbacks cameraMgrListener = {
-                .context = this,
-                .onCameraAvailable = OnCameraAvailable,
-                .onCameraUnavailable = OnCameraUnavailable,
-        };
+        cameraMgrListener.context = this;
         ACameraManager_registerAvailabilityCallback(_cameraMgr,
                                                     reinterpret_cast<const ACameraManager_AvailabilityCallbacks *>
-                                                    (&cameraDeviceListener));
+                                                    (&cameraMgrListener));
 
         // 初始化相机控制 通过修改 metadata 控制相机
         ACameraMetadata *metadataObj;
@@ -181,26 +179,26 @@ namespace MyCamera {
         camera_status_t status = ACameraMetadata_getConstEntry(
                 metadataObj, ACAMERA_SENSOR_INFO_EXPOSURE_TIME_RANGE, &val);
 
-        const auto kMinExposureTime = static_cast<uint64_t>(1000000);
-        const auto kMaxExposureTime = static_cast<uint64_t>(250000000);
 
+        // demo： 修改相机参数
+        const auto kMinExposureTime = static_cast<uint64_t>(1000000); // ns
+        const auto kMaxExposureTime = static_cast<uint64_t>(250000000); // ns
         if (status == ACAMERA_OK) {
-            if (status == ACAMERA_OK) {
-                _exposureRange.min_ = val.data.i64[0];
-                if (_exposureRange.min_ < kMinExposureTime) {
-                    _exposureRange.min_ = kMinExposureTime;
-                }
-                _exposureRange.max_ = val.data.i64[1];
-                if (_exposureRange.max_ > kMaxExposureTime) {
-                    _exposureRange.max_ = kMaxExposureTime;
-                }
-                _exposureTime = _exposureRange.value(2);
-            } else {
-                LOG_WARN("Unsupported ACAMERA_SENSOR_INFO_EXPOSURE_TIME_RANGE");
-                _exposureRange.min_ = _exposureRange.max_ = 0l;
-                _exposureTime = 0l;
+            _exposureRange.min_ = val.data.i64[0];
+            if (_exposureRange.min_ < kMinExposureTime) {
+                _exposureRange.min_ = kMinExposureTime;
             }
+            _exposureRange.max_ = val.data.i64[1];
+            if (_exposureRange.max_ > kMaxExposureTime) {
+                _exposureRange.max_ = kMaxExposureTime;
+            }
+            _exposureTime = _exposureRange.value(2);
+        } else {
+            LOG_WARN("Unsupported ACAMERA_SENSOR_INFO_EXPOSURE_TIME_RANGE");
+            _exposureRange.min_ = _exposureRange.max_ = 0l;
+            _exposureTime = 0l;
         }
+        LOG_INFO("Exposure Time is %d", _exposureTime);
 
         _valid = true;
     }
@@ -219,8 +217,9 @@ namespace MyCamera {
         ACameraMetadata_getConstEntry(metadata, ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
                                       &entry);
 
+
         bool foundIt = false;
-        DisplayDimension foundRes(10000, 10000); // 找到的目标分辨率
+        DisplayDimension foundRes = disp; // 找到的目标分辨率
         DisplayDimension maxJPG(0, 0); // 找到的最大的jpg分辨率
 
         // 数据格式: format, width, height, input?, type int32
@@ -230,22 +229,21 @@ namespace MyCamera {
 
             if (input) continue;
 
-
             if (format == AIMAGE_FORMAT_YUV_420_888 ||
                 format == AIMAGE_FORMAT_JPEG) {
                 // 根据格式构造分辨率
                 DisplayDimension res(entry.data.i32[i + 1], entry.data.i32[i + 2]);
-                LOG_INFO("Try Resolution %s with format %d", res.toString().c_str(), format);
+//                LOG_INFO("Try Resolution %s with format %d", res.toString().c_str(), format);
 //                if (!disp.IsSameRatio(res)) continue;
                 if (format == AIMAGE_FORMAT_YUV_420_888 && foundRes > res) {
                     foundIt = true;
                     foundRes = res;
+                    break;
                 } else if (format == AIMAGE_FORMAT_JPEG && res > maxJPG) {
                     maxJPG = res;
                 }
             }
         }
-
 
         if (foundIt) {
             resView->width = foundRes.org_width();
@@ -255,22 +253,56 @@ namespace MyCamera {
                 resCap->height = maxJPG.org_height();
             }
         } else {
-//            LOG_WARN("Did not find any compatible camera resolution, taking 640x480");
-//            if (disp.IsPortrait()) {
-//                resView->width = 480;
-//                resView->height = 640;
-//            } else {
-//                resView->width = 640;
-//                resView->height = 480;
-//            }
-//            if (resCap) *resCap = *resView;
+            LOG_WARN("Did not find any compatible camera resolution, taking 640x480");
+            if (disp.IsPortrait()) {
+                resView->width = 480;
+                resView->height = 640;
+            } else {
+                resView->width = 640;
+                resView->height = 480;
+            }
+            if (resCap) *resCap = *resView;
         }
+        resView->format = AIMAGE_FORMAT_YUV_420_888;
+        if (resCap) resCap->format = AIMAGE_FORMAT_JPEG;
         return foundIt;
     }
 
     NDKCamera::~NDKCamera() {
         _valid = false;
-        // ...
+        if (_captureSessionState == CaptureSessionState::ACTIVE) {
+            ACameraCaptureSession_stopRepeating(_captureSession);
+        }
+        ACameraCaptureSession_close(_captureSession);
+
+        // 释放所有的输出窗口
+        for (auto &req: _requests) {
+            if (!req._outputNativeWindow) continue;
+
+            ACaptureRequest_removeTarget(req._request, req._target);
+            ACaptureRequest_free(req._request);
+
+            ACaptureSessionOutputContainer_remove(_outputContainer, req._sessionOutput);
+            ACaptureSessionOutput_free(req._sessionOutput);
+
+            ANativeWindow_release(req._outputNativeWindow);
+        }
+        _requests.resize(0);
+        // 释放容器
+        ACaptureSessionOutputContainer_free(_outputContainer);
+        // 释放所有的相机对象
+        for (auto &cam: _cameras) {
+            if (cam.second.device) {
+                ACameraDevice_close(cam.second.device);
+            }
+        }
+        _cameras.clear(); // 清空 map
+
+        if (_cameraMgr) {
+            ACameraManager_unregisterAvailabilityCallback(_cameraMgr, &cameraMgrListener);
+            ACameraManager_delete(_cameraMgr);
+            _cameraMgr = nullptr;
+        }
     }
 
     /**
@@ -288,7 +320,6 @@ namespace MyCamera {
         for (int i = 0; i < cameraIds->numCameras; i++) {
             const char *id = cameraIds->cameraIds[i];
             LOG_INFO("%d 相机标识符 %s", i, id);
-
 
             // 获取某个相机的媒体信息
             ACameraMetadata *metadataObj;
@@ -330,6 +361,7 @@ namespace MyCamera {
     void NDKCamera::OnCameraStatusChanged(const char *id, bool available) {
         if (_valid) {
             _cameras[std::string(id)].available = available;
+            LOG_INFO("Camera Id %s is %d", id, available);
         }
     }
 
@@ -337,7 +369,8 @@ namespace MyCamera {
                                   bool manual_preview, int32_t image_rotation) {
         // 预览的请求缓冲区
         _requests[PREVIEW_REQUEST_IDX]._outputNativeWindow = preview_window;
-        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_PREVIEW;
+//        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_PREVIEW;
+        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_STILL_CAPTURE;
         // 拍摄的请求缓冲区
         _requests[JPG_CAPTURE_REQUEST_IDX]._outputNativeWindow = jpg_window;
         _requests[JPG_CAPTURE_REQUEST_IDX]._template = TEMPLATE_STILL_CAPTURE;
@@ -358,7 +391,7 @@ namespace MyCamera {
 
             // 根据窗口创建一个 相机目标输出对象
             ACameraOutputTarget_create(req._outputNativeWindow, &req._target);
-            // 创建一个相机捕获请求 根据 模板ID 决定捕获的类型
+            // 创建一个相机捕获请求 根据 模板 决定捕获的质量
             ACameraDevice_createCaptureRequest(_cameras[_activeCameraId].device, req._template,
                                                &req._request);
             // 将 目标输出对象 放入请求中
@@ -374,11 +407,16 @@ namespace MyCamera {
                 .onReady = OnSessionReady,
                 .onActive = OnSessionActive,
         };
-        ACameraDevice_createCaptureSession(
+        auto status = ACameraDevice_createCaptureSession(
                 _cameras[_activeCameraId].device,
                 _outputContainer,
                 &sessionListener,
                 &_captureSession);
+        if (status != ACAMERA_OK) {
+            throw std::runtime_error("Open camera device create capture session error.");
+        } else {
+            LOG_WARN("_captureSession = %p", _captureSession);
+        }
 
         if (jpg_window) {
             // 这里设置捕获时的一些属性，这里设置的图像的旋转角度
@@ -392,20 +430,43 @@ namespace MyCamera {
         if (!manual_preview) {
             return;
         }
+        // 设置相机参数
 
-        const int32_t ae_off = ACAMERA_CONTROL_AE_MODE_OFF;
-        ACaptureRequest_setEntry_i32(_requests[PREVIEW_REQUEST_IDX]._request,
-                                     ACAMERA_CONTROL_AE_MODE, 1,
-                                     &ae_off);
+//        const uint8_t ae_off = ACAMERA_CONTROL_AE_MODE_OFF;
+//        ACaptureRequest_setEntry_u8(_requests[PREVIEW_REQUEST_IDX]._request,
+//                                    ACAMERA_CONTROL_AE_MODE, 1,
+//                                    &ae_off);
+//
+//        const int64_t exposure = _exposureTime;
+//        ACaptureRequest_setEntry_i64(_requests[PREVIEW_REQUEST_IDX]._request,
+//                                     ACAMERA_SENSOR_EXPOSURE_TIME, 1,
+//                                     &exposure);
+        int32_t rotation = 90;
+        ACaptureRequest_setEntry_i32(
+                _requests[PREVIEW_REQUEST_IDX]._request,
+                ACAMERA_JPEG_ORIENTATION,
+                1,
+                &rotation
+        );
+//        const uint8_t af_off = ACAMERA_CONTROL_AF_MODE_OFF;
+//        ACaptureRequest_setEntry_u8(_requests[PREVIEW_REQUEST_IDX]._request,
+//                                    ACAMERA_CONTROL_AF_MODE, 1,
+//                                    &af_off);
+//        const float focus_distance = 1.0 / 90.0;
+//        ACaptureRequest_setEntry_float(_requests[PREVIEW_REQUEST_IDX]._request,
+//                                       ACAMERA_LENS_FOCUS_DISTANCE, 1,
+//                                       &focus_distance);
+        LOG_INFO("Reach manual preview");
     }
 
     void NDKCamera::CreatePreviewSession(ANativeWindow *previewWindow) {
-        CreateSession(previewWindow, nullptr, false, 0);
+        CreateSession(previewWindow, nullptr, true, 0);
+//        CreateSession(previewWindow, nullptr, false, 0);
     }
 
     void NDKCamera::OnSessionState(ACameraCaptureSession *ses, CaptureSessionState state) {
         if (ses == nullptr || ses != _captureSession) {
-            LOG_ERR("ses is not mine. !!");
+            LOG_WARN("ses is not mine. !!");
             return;
         }
         _captureSessionState = state;
@@ -413,8 +474,10 @@ namespace MyCamera {
 
     void NDKCamera::StartPreview(bool state) {
         if (state) {
+            LOG_INFO("StartPreview");
             ACameraCaptureSession_setRepeatingRequest(_captureSession, nullptr, 1,
                                                       &_requests[PREVIEW_REQUEST_IDX]._request,
+//                                                        &_requests[JPG_CAPTURE_REQUEST_IDX]._request,
                                                       nullptr);
         } else if (_captureSessionState == CaptureSessionState::ACTIVE) {
             ACameraCaptureSession_stopRepeating(_captureSession);
