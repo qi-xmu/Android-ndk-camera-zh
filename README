@@ -1,0 +1,25 @@
+项目介绍：
+· 使用Android NDK开发 Camera2，获取相机图像。
+· 基于官方demo的中文注释。添加了AImageReader读取图像的方法。
+
+更新日志：
+· 2023/04/03
+添加了AImageReader方法，可以在预览的时候获取YUV420格式的图像。
+1. camera_image_reader：添加了CameraImageReader类的实现，封装了图像读取的实现。
+2. 添加了opencv的共享库，暂时没有使用。可以用于YUV转换成RGB。
+3. ncamera.h：添加了CaptureRequestInfo的注解，对Camera2的模型理解更加深刻。
+其他问题：
+1. 偶尔出现闪退
+2. 相机无法在divisible的时候释放，重新visible的时候相机被释放，无法获取图像。
+
+· 2023/04/01
+1. camera_surface:定义了一个CameraEngine类，用于驱动相机预览到Surface对象上。
+2. native-log.h: 统一了log接口。
+3. 其他文件：补充了一些接口，成功启动了摄像头并显示了预览。
+存在问题：切换横屏竖屏的时候存在问题。
+
+· 2023/03/31
+first commit:
+1. 完成加载相机列表：0表示后置主摄 1前置主摄， 其他为辅助摄像头
+2. 完成读取相机特定分辨率
+3. 可以通过metadata和entry的方法更改相机的属性
