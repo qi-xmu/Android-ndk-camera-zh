@@ -27,7 +27,6 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
     private var _cameraPreviewSize: Size? = null
     private var _ndkCamera: Long? = null
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -47,6 +46,9 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
             _textureView = findViewById<View>(R.id.texturePreview) as TextureView
             _textureView?.surfaceTextureListener = this
         }
+
+        Log.i(mainTAG, "test Socket start")
+        Log.i(mainTAG, "test Socket end")
     }
 
 
@@ -77,7 +79,7 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
                     val deviceLevel =
                         characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)!!
                     val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
-                    Log.i(mainTAG, "Camera $id level is $deviceLevel")
+//                    Log.i(mainTAG, "Camera $id level is $deviceLevel")
                     if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY && facing == CameraMetadata.LENS_FACING_BACK) {
                         camera2Dev = false
                     }
@@ -99,6 +101,7 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
         surface: SurfaceTexture, textureWidth: Int, textureHeight: Int
     ) {
         // 创建相机对象，这个对象由CPP维护
+//        _ndkCamera = createCamera(320, 240)
         _ndkCamera = createCamera(640, 480)
         // 相机预览大小
         _cameraPreviewSize = getCompatiblePreviewSize(_ndkCamera!!)
@@ -174,6 +177,10 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
 
     // 其他接口
     private external fun getCompatiblePreviewSize(ndkCamera: Long): Size?
+
+    // 网络接口测试
+//    private external fun testSocket()
+//    private external fun testSocketClient()
 
     companion object {
         init {

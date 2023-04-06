@@ -1,0 +1,68 @@
+{
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/native-lib.cpp": {
+    "language": "C++",
+    "code": 64,
+    "comment": 14,
+    "blank": 12
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/camera_listeners.h": {
+    "language": "C++",
+    "code": 9,
+    "comment": 13,
+    "blank": 11
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/native-log.h": {
+    "language": "C++",
+    "code": 8,
+    "comment": 3,
+    "blank": 5
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/CMakeLists.txt": {
+    "language": "cmake",
+    "code": 24,
+    "comment": 0,
+    "blank": 8
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/camera_listeners.cpp": {
+    "language": "C++",
+    "code": 26,
+    "comment": 7,
+    "blank": 8
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/camera_image_reader.h": {
+    "language": "C++",
+    "code": 21,
+    "comment": 22,
+    "blank": 12
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/camera_image_reader.cpp": {
+    "language": "C++",
+    "code": 34,
+    "comment": 6,
+    "blank": 13
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/ncamera.cpp": {
+    "language": "C++",
+    "code": 308,
+    "comment": 116,
+    "blank": 66
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/camera_engine.h": {
+    "language": "C++",
+    "code": 29,
+    "comment": 59,
+    "blank": 16
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/camera_engine.cpp": {
+    "language": "C++",
+    "code": 109,
+    "comment": 21,
+    "blank": 25
+  },
+  "file:///d%3A/codeSpace/AndroidProj/TCamera/app/src/main/cpp/ncamera.h": {
+    "language": "C++",
+    "code": 85,
+    "comment": 140,
+    "blank": 37
+  }
+}

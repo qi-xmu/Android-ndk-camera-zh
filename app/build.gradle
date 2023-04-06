@@ -42,6 +42,12 @@ android {
             version '3.22.1'
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
     buildFeatures {
         viewBinding true
     }

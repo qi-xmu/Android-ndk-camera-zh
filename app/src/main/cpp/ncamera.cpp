@@ -131,7 +131,8 @@ namespace MyCamera {
     enum PREVIEW_INDICES {
         PREVIEW_REQUEST_IDX = 0,
         JPG_CAPTURE_REQUEST_IDX, // 1
-        CAPTURE_REQUEST_COUNT, // 2
+        VIDEO_RECORD_REQUEST_IDX, //2
+        CAPTURE_REQUEST_COUNT, // 3
     };
     // 设置相机可用时的回调监听器
     static ACameraManager_AvailabilityCallbacks cameraMgrListener = {
@@ -176,29 +177,10 @@ namespace MyCamera {
         ACameraMetadata_const_entry val = {
                 0,
         };
-        camera_status_t status = ACameraMetadata_getConstEntry(
-                metadataObj, ACAMERA_SENSOR_INFO_EXPOSURE_TIME_RANGE, &val);
+        camera_status_t status;
 
-
-        // demo： 修改相机参数
-        const auto kMinExposureTime = static_cast<uint64_t>(1000000); // ns
-        const auto kMaxExposureTime = static_cast<uint64_t>(250000000); // ns
-        if (status == ACAMERA_OK) {
-            _exposureRange.min_ = val.data.i64[0];
-            if (_exposureRange.min_ < kMinExposureTime) {
-                _exposureRange.min_ = kMinExposureTime;
-            }
-            _exposureRange.max_ = val.data.i64[1];
-            if (_exposureRange.max_ > kMaxExposureTime) {
-                _exposureRange.max_ = kMaxExposureTime;
-            }
-            _exposureTime = _exposureRange.value(2);
-        } else {
-            LOG_WARN("Unsupported ACAMERA_SENSOR_INFO_EXPOSURE_TIME_RANGE");
-            _exposureRange.min_ = _exposureRange.max_ = 0l;
-            _exposureTime = 0l;
-        }
-        LOG_INFO("Exposure Time is %d", _exposureTime);
+        status = ACameraMetadata_getConstEntry(
+                metadataObj, ACAMERA_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES, &val);
 
         _valid = true;
     }
@@ -315,11 +297,11 @@ namespace MyCamera {
         ACameraIdList *cameraIds = nullptr;
         // 获取设备所有的相机列表
         ACameraManager_getCameraIdList(_cameraMgr, &cameraIds);
-        LOG_INFO("相机数量：%d", cameraIds->numCameras);
+//        LOG_INFO("相机数量：%d", cameraIds->numCameras);
 
         for (int i = 0; i < cameraIds->numCameras; i++) {
             const char *id = cameraIds->cameraIds[i];
-            LOG_INFO("%d 相机标识符 %s", i, id);
+//            LOG_INFO("%d 相机标识符 %s", i, id);
 
             // 获取某个相机的媒体信息
             ACameraMetadata *metadataObj;
@@ -361,7 +343,7 @@ namespace MyCamera {
     void NDKCamera::OnCameraStatusChanged(const char *id, bool available) {
         if (_valid) {
             _cameras[std::string(id)].available = available;
-            LOG_INFO("Camera Id %s is %d", id, available);
+//            LOG_INFO("Camera Id %s is %d", id, available);
         }
     }
 
@@ -370,7 +352,7 @@ namespace MyCamera {
         // 预览的请求缓冲区
         _requests[PREVIEW_REQUEST_IDX]._outputNativeWindow = preview_window;
 //        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_PREVIEW;
-        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_STILL_CAPTURE;
+        _requests[PREVIEW_REQUEST_IDX]._template = TEMPLATE_RECORD;
         // 拍摄的请求缓冲区
         _requests[JPG_CAPTURE_REQUEST_IDX]._outputNativeWindow = jpg_window;
         _requests[JPG_CAPTURE_REQUEST_IDX]._template = TEMPLATE_STILL_CAPTURE;
@@ -407,6 +389,7 @@ namespace MyCamera {
                 .onReady = OnSessionReady,
                 .onActive = OnSessionActive,
         };
+        // MASK!!创建相机会话
         auto status = ACameraDevice_createCaptureSession(
                 _cameras[_activeCameraId].device,
                 _outputContainer,
@@ -427,41 +410,30 @@ namespace MyCamera {
                     &image_rotation
             );
         }
-        if (!manual_preview) {
-            return;
-        }
+//        if (!manual_preview) {
+//            return;
+//        }
         // 设置相机参数
-
-//        const uint8_t ae_off = ACAMERA_CONTROL_AE_MODE_OFF;
-//        ACaptureRequest_setEntry_u8(_requests[PREVIEW_REQUEST_IDX]._request,
-//                                    ACAMERA_CONTROL_AE_MODE, 1,
-//                                    &ae_off);
-//
-//        const int64_t exposure = _exposureTime;
-//        ACaptureRequest_setEntry_i64(_requests[PREVIEW_REQUEST_IDX]._request,
-//                                     ACAMERA_SENSOR_EXPOSURE_TIME, 1,
-//                                     &exposure);
-        int32_t rotation = 90;
-        ACaptureRequest_setEntry_i32(
+        uint8_t stab = ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE_ON;
+        ACaptureRequest_setEntry_u8(
                 _requests[PREVIEW_REQUEST_IDX]._request,
-                ACAMERA_JPEG_ORIENTATION,
+                ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE,
                 1,
-                &rotation
+                &stab
         );
 //        const uint8_t af_off = ACAMERA_CONTROL_AF_MODE_OFF;
 //        ACaptureRequest_setEntry_u8(_requests[PREVIEW_REQUEST_IDX]._request,
 //                                    ACAMERA_CONTROL_AF_MODE, 1,
 //                                    &af_off);
-//        const float focus_distance = 1.0 / 90.0;
-//        ACaptureRequest_setEntry_float(_requests[PREVIEW_REQUEST_IDX]._request,
-//                                       ACAMERA_LENS_FOCUS_DISTANCE, 1,
-//                                       &focus_distance);
+        const float focus_distance = 90;
+        ACaptureRequest_setEntry_float(_requests[PREVIEW_REQUEST_IDX]._request,
+                                       ACAMERA_LENS_FOCUS_DISTANCE, 1,
+                                       &focus_distance);
         LOG_INFO("Reach manual preview");
     }
 
     void NDKCamera::CreatePreviewSession(ANativeWindow *previewWindow) {
         CreateSession(previewWindow, nullptr, true, 0);
-//        CreateSession(previewWindow, nullptr, false, 0);
     }
 
     void NDKCamera::OnSessionState(ACameraCaptureSession *ses, CaptureSessionState state) {
@@ -474,16 +446,15 @@ namespace MyCamera {
 
     void NDKCamera::StartPreview(bool state) {
         if (state) {
-            LOG_INFO("StartPreview");
+            LOG_INFO("Preview");
             ACameraCaptureSession_setRepeatingRequest(_captureSession, nullptr, 1,
                                                       &_requests[PREVIEW_REQUEST_IDX]._request,
-//                                                        &_requests[JPG_CAPTURE_REQUEST_IDX]._request,
                                                       nullptr);
         } else if (_captureSessionState == CaptureSessionState::ACTIVE) {
+            LOG_INFO("stop Preview");
             ACameraCaptureSession_stopRepeating(_captureSession);
         }
     }
-
 } // NCamera
 
 

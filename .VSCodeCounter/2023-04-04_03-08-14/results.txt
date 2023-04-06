@@ -1,0 +1,36 @@
+Date : 2023-04-04 03:08:14
+Directory : d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp
+Total : 11 files,  717 codes, 401 comments, 213 blanks, all 1331 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C++      |         10 |        693 |        401 |        205 |      1,299 |
+| cmake    |          1 |         24 |          0 |          8 |         32 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                      | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                         |         11 |        717 |        401 |        213 |      1,331 |
++---------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                  | language | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\CMakeLists.txt          | cmake    |         24 |          0 |          8 |         32 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_engine.cpp       | C++      |        109 |         21 |         25 |        155 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_engine.h         | C++      |         29 |         59 |         16 |        104 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_image_reader.cpp | C++      |         34 |          6 |         13 |         53 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_image_reader.h   | C++      |         21 |         22 |         12 |         55 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_listeners.cpp    | C++      |         26 |          7 |          8 |         41 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_listeners.h      | C++      |          9 |         13 |         11 |         33 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\native-lib.cpp          | C++      |         64 |         14 |         12 |         90 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\native-log.h            | C++      |          8 |          3 |          5 |         16 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\ncamera.cpp             | C++      |        308 |        116 |         66 |        490 |
+| d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\ncamera.h               | C++      |         85 |        140 |         37 |        262 |
+| Total                                                                     |          |        717 |        401 |        213 |      1,331 |
++---------------------------------------------------------------------------+----------+------------+------------+------------+------------+

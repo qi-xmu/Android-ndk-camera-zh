@@ -1,0 +1,13 @@
+"filename", "language", "C++", "cmake", "comment", "blank", "total"
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\CMakeLists.txt", "cmake", 0, 24, 0, 8, 32
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_engine.cpp", "C++", 109, 0, 21, 25, 155
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_engine.h", "C++", 29, 0, 59, 16, 104
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_image_reader.cpp", "C++", 34, 0, 6, 13, 53
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_image_reader.h", "C++", 21, 0, 22, 12, 55
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_listeners.cpp", "C++", 26, 0, 7, 8, 41
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\camera_listeners.h", "C++", 9, 0, 13, 11, 33
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\native-lib.cpp", "C++", 64, 0, 14, 12, 90
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\native-log.h", "C++", 8, 0, 3, 5, 16
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\ncamera.cpp", "C++", 308, 0, 116, 66, 490
+"d:\codeSpace\AndroidProj\TCamera\app\src\main\cpp\ncamera.h", "C++", 85, 0, 140, 37, 262
+"Total", "-", 693, 24, 401, 213, 1331

@@ -12,6 +12,7 @@
 
 #include "ncamera.h"
 #include "camera_image_reader.h"
+#include "net/tcp_node_server.h"
 
 /**
  * transmit camera image to surface.
@@ -50,7 +51,18 @@ private:
      * 兼容的相机分辨率
      */
     ImageFormat _compatible_camera_resolution;
-
+    /**
+     * 显示的 ANativeWindow
+     */
+    ANativeWindow *_native_window;
+    /**
+     * 网络节点
+     */
+    TcpNodeServer *_tcp_node = nullptr;
+    /**
+     * preview state
+     */
+    bool _preview_state = false;
 
 public:
     /**
@@ -80,10 +92,10 @@ public:
     jobject GetSurfaceObject();
 
     /**
-     * 开始预览
+     * 开始或者关闭预览
      * @param state 开始或者关闭预览
      */
-    void StartPreview(bool state);
+    void Preview(bool state);
 
     /**
      * 获取兼容的相机分辨率
@@ -96,7 +108,10 @@ public:
      */
     void setCameraImageReader(jobject surface);
 
-    ANativeWindow *GetSurfaceNativeWindow();
+    /**
+     * 图像回调函数
+     */
+    static void onImageAvailable(void *context, AImageReader *reader);
 };
 
 
