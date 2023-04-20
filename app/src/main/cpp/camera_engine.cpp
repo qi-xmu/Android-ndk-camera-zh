@@ -137,10 +137,6 @@ void CameraEngine::onImageAvailable(void *context, AImageReader *reader) {
         // 数据总长度为 width * height * 3 / 2
         res = AImage_getPlaneData(image, 0, &y_data, &y_len);
         if (res) LOG_ERR("AImage_getPlaneData 0 error");
-        res = AImage_getPlaneData(image, 1, &u_data, &u_len);
-        if (res) LOG_ERR("AImage_getPlaneData 1 error");
-        res = AImage_getPlaneData(image, 2, &v_data, &v_len);
-        if (res) LOG_ERR("AImage_getPlaneData 2 error");
         // 如果需要将 YUV 转化成 ARGB
         img_fmt = AIMAGE_FORMAT_RGBA_8888;
     } else {
@@ -171,7 +167,7 @@ void CameraEngine::onImageAvailable(void *context, AImageReader *reader) {
 
         auto *bits = reinterpret_cast<uint8_t *>(aw_buffer.bits);
         if (AIMAGE_FORMAT_YUV_420_888 == img_fmt) {
-            memcpy(bits, y_data, y_len + v_len + 1);
+            memcpy(bits, y_data, y_len * 3 / 2);
         } else if (AIMAGE_FORMAT_RGBA_8888 == img_fmt) {
             cvtYUV2RGB(y_data, (uint32_t *) bits, width, height);
         } else if (AIMAGE_FORMAT_JPEG == img_fmt) {
@@ -184,17 +180,17 @@ void CameraEngine::onImageAvailable(void *context, AImageReader *reader) {
     AImage_delete(image);
     // 帧率统计
     if (pre_timestamp) {
-        int64_t cost = image_timestamp - pre_timestamp;
         static char buf[1024];
-//        LOG_INFO("%lld %d", cost, (int) (1000000000.0 / cost));
-        sprintf(buf, "%lld %d", cost, (int) (1000000000.0 / cost));
+        memset(buf, 0, sizeof(buf));
+        int size = sprintf(buf, "%lld", image_timestamp);
 
-        if (cam_eng->_tcp_node->valid) {
-//            cam_eng->_tcp_node->str_send(buf);
-//            cam_eng->_tcp_node->bin_send(y_data, y_len + v_len + 1);
+        if (cam_eng->_tcp_node->getValid()) {
+            cam_eng->_tcp_node->str_send(buf, size);
+            cam_eng->_tcp_node->bin_send(y_data, y_len);
         } else if (cam_eng->_preview_state) {
             LOG_INFO("shutdown Preview");
             cam_eng->Preview(false);
+            exit(1);
         }
     }
     pre_timestamp = image_timestamp;
@@ -203,9 +199,18 @@ void CameraEngine::onImageAvailable(void *context, AImageReader *reader) {
 
 void CameraEngine::setCameraImageReader(jobject surface) {
     // 等待网络连接开始
-    _tcp_node = new TcpNodeServer();
+    _tcp_node = new TcpNodeClient("192.168.8.2", 26170);
+
     LOG_INFO("waiting for client connected.");
-    _tcp_node->wait_for_client();
+    try {
+        _tcp_node->connect_server();
+        LOG_INFO("server connected. %d", _tcp_node->getValid());
+    } catch (const char *e) {
+        LOG_ERR("%s", e);
+    }
+    if (!_tcp_node->getValid()) {
+        return;
+    }
 
     // 创建一个引用
     _surface = _env->NewGlobalRef(surface);
@@ -217,7 +222,6 @@ void CameraEngine::setCameraImageReader(jobject surface) {
     };
     _camera_image_reader = new CameraImageReader(_compatible_camera_resolution,
                                                  listener);
-
     // 这个地方开始一个session
     _camera->CreatePreviewSession(_camera_image_reader->getImageNativeWindow());
 }

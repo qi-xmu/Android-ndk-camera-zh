@@ -12,7 +12,7 @@
 
 #include "ncamera.h"
 #include "camera_image_reader.h"
-#include "net/tcp_node_server.h"
+#include "net/tcp_node_client.h"
 
 /**
  * transmit camera image to surface.
@@ -58,7 +58,8 @@ private:
     /**
      * 网络节点
      */
-    TcpNodeServer *_tcp_node = nullptr;
+//    TcpNodeServer *_tcp_node = nullptr;
+    TcpNodeClient *_tcp_node = nullptr;
     /**
      * preview state
      */

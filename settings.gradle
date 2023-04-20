@@ -14,4 +14,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "TCamera"
 include ':app'
-include ':opencv-sdk'

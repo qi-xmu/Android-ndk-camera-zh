@@ -46,26 +46,10 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
             _textureView = findViewById<View>(R.id.texturePreview) as TextureView
             _textureView?.surfaceTextureListener = this
         }
-
-        Log.i(mainTAG, "test Socket start")
-        Log.i(mainTAG, "test Socket end")
-    }
-
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            window.decorView.systemUiVisibility =
-                (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onStop() {
-        super.onStop()
+        getWindow().setFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        )
     }
 
     private fun isCamera2Device(): Boolean {
@@ -101,7 +85,6 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
         surface: SurfaceTexture, textureWidth: Int, textureHeight: Int
     ) {
         // 创建相机对象，这个对象由CPP维护
-//        _ndkCamera = createCamera(320, 240)
         _ndkCamera = createCamera(640, 480)
         // 相机预览大小
         _cameraPreviewSize = getCompatiblePreviewSize(_ndkCamera!!)
@@ -131,10 +114,6 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
         )
         _textureView?.setTransform(matrix)
 
-        // 设置缓冲区大小
-//        surface.setDefaultBufferSize(
-//            _cameraPreviewSize?.width!!, _cameraPreviewSize?.height!!
-//        )
         _surface = Surface(surface)
         onPreviewSurfaceCreated(_ndkCamera!!, _surface!!)
     }
@@ -164,7 +143,6 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
      * implement TextureView.SurfaceTextureListener
      */
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-
 
     /**
      * A native method that is implemented by the 'tcamera' native library,
